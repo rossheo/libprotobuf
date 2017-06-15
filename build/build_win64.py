@@ -2,7 +2,7 @@ import subprocess
 import os
 import sys
 import shutil
-import _winreg
+import winreg
 
 vs_intermediate     = "_vs_tmp"
 protobuf_src_path   = "../../protobuf-source"
@@ -22,10 +22,10 @@ def create_vs_prj():
 def get_vs2015_devenv():
     try:
         #get visual studio install path
-        reg_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\VisualStudio\\14.0")
-        reg_value, reg_type = _winreg.QueryValueEx(reg_key, "InstallDir")
-        _winreg.CloseKey(reg_key);
-        if(reg_type != _winreg.REG_SZ):
+        reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\VisualStudio\\14.0")
+        reg_value, reg_type = winreg.QueryValueEx(reg_key, "InstallDir")
+        winreg.CloseKey(reg_key);
+        if(reg_type != winreg.REG_SZ):
             print(reg_type)
             return None
         return os.path.join(reg_value, "devenv.com")
@@ -36,14 +36,14 @@ def apply_patch_for_port_h():
     port_h_filepath = os.path.join(prefix_path, "include/google/protobuf/stubs/port.h")
     port_file = open(port_h_filepath, 'r')
     if (port_file is None):
-        print "Failed to open the port.h file!!!"
+        print("Failed to open the port.h file!!!")
         return
     file_lines = port_file.readlines()
     port_file.close()
 
     port_file = open(port_h_filepath, 'w')
     if (port_file is None):
-        print "Failed to write the port.h file!!!"
+        print("Failed to write the port.h file!!!")
         return
     meet_byteswap = False;
     for line in file_lines:

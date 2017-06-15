@@ -2,8 +2,9 @@ import subprocess
 import os
 import sys
 import shutil
-import _winreg
+import winreg
 
+# UE4 LINUX Cross compile : https://docs.unrealengine.com/latest/KOR/Platforms/Linux/GettingStarted/index.html
 clang_linux_root    = os.path.join(os.environ["LINUX_MULTIARCH_ROOT"], "x86_64-unknown-linux-gnu")
 clang_exe           = clang_linux_root + "/bin/clang.exe"
 clang_ar_exe        = clang_linux_root + "/bin/x86_64-unknown-linux-gnu-ar.exe"
@@ -95,17 +96,17 @@ libproto_files      = [
 def get_unreal_source():
     try:
         #get unreal engine builds key
-        reg_key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "SOFTWARE\\Epic Games\\Unreal Engine\\Builds")
+        reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "SOFTWARE\\Epic Games\\Unreal Engine\\Builds")
         reg_index=0
         while(True):
-            reg_name, reg_value, reg_type = _winreg.EnumValue(reg_key, reg_index)
-            if(reg_type != _winreg.REG_SZ):
+            reg_name, reg_value, reg_type = winreg.EnumValue(reg_key, reg_index)
+            if(reg_type != winreg.REG_SZ):
                 continue;
             unreal_source_path = os.path.join(reg_value, "Engine/Source")
             if(os.path.exists(unreal_source_path) and os.path.exists(os.path.join(unreal_source_path, "UE4Editor.Target.cs"))):
-                _winreg.CloseKey(reg_key);
+                winreg.CloseKey(reg_key);
                 return unreal_source_path
-        _winreg.CloseKey(reg_key);
+        winreg.CloseKey(reg_key);
         return None
     except:
         return None
@@ -199,7 +200,7 @@ os.mkdir(clang_intermediate)
 
 #build
 if(clang_build(libproto_files, clang_intermediate) != 0):
-    printf("compiler error!")
+    print("compiler error!")
     sys.exit(1)
 
 #archive
