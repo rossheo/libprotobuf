@@ -5,7 +5,7 @@ using UnrealBuildTool;
 
 public class libprotobuf : ModuleRules
 {
-    public libprotobuf(TargetInfo Target)
+    public libprotobuf(ReadOnlyTargetRules Target) : base(Target)
     {
         Type = ModuleType.External;
 
