@@ -44,6 +44,8 @@
 #include <stdint.h>
 #endif
 
+#include <google/protobuf/stubs/platform_macros.h>
+
 #undef PROTOBUF_LITTLE_ENDIAN
 #ifdef _WIN32
   // Assuming windows is always little-endian.
@@ -60,8 +62,12 @@
   #endif
 #else
   #include <sys/param.h>   // __BYTE_ORDER
+  #if defined(__OpenBSD__)
+    #include <endian.h>
+  #endif
   #if ((defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)) || \
-         (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN)) && \
+         (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) || \
+         (defined(BYTE_ORDER) && BYTE_ORDER == LITTLE_ENDIAN)) && \
       !defined(PROTOBUF_DISABLE_LITTLE_ENDIAN_OPT_FOR_TEST)
     #define PROTOBUF_LITTLE_ENDIAN 1
   #endif
@@ -100,6 +106,15 @@
 
 // ===================================================================
 // from google3/base/port.h
+
+#if (defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L || \
+     (defined(_MSC_VER) && _MSC_VER >= 1900))
+// Define this to 1 if the code is compiled in C++11 mode; leave it
+// undefined otherwise.  Do NOT define it to 0 -- that causes
+// '#ifdef LANG_CXX11' to behave differently from '#if LANG_CXX11'.
+#define LANG_CXX11 1
+#endif
+
 namespace google {
 namespace protobuf {
 
@@ -352,8 +367,13 @@ class Bits {
 #endif
   }
 
-  static uint64 Log2FloorNonZero64(uint64 n) {
-#if defined(__GNUC__)
+  static uint32 Log2FloorNonZero64(uint64 n) {
+    // arm-nacl-clang runs into an instruction-selection failure when it
+    // encounters __builtin_clzll:
+    // https://bugs.chromium.org/p/nativeclient/issues/detail?id=4395
+    // To work around this, when we build for NaCl we use the portable
+    // implementation instead.
+#if defined(__GNUC__) && !defined(GOOGLE_PROTOBUF_OS_NACL)
   return 63 ^ __builtin_clzll(n);
 #else
   return Log2FloorNonZero64_Portable(n);
@@ -447,7 +467,6 @@ class BigEndian {
     GOOGLE_UNALIGNED_STORE64(p, FromHost64(v));
   }
 };
-
 
 }  // namespace protobuf
 }  // namespace google

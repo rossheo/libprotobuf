@@ -7,7 +7,7 @@ import sys
 
 msvc_check_begin = '#ifdef _MSC_VER'
 msvc_check_end   = '#endif'
-comment = '// Added for UE4 in {0}(UTC)'.format(datetime.utcnow())
+comment = '// Added for UE4 in {0}(UTC +09:00)'.format(datetime.utcnow() + timedelta(hours=9))
 include_allow_header = '#include "AllowWindowsPlatformTypes.h"'
 include_hide_header = '#include "HideWindowsPlatformTypes.h"'
 
