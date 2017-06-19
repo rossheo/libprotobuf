@@ -25,6 +25,8 @@ public class libprotobuf : ModuleRules
                     "_WINDOWS",
                     "NDEBUG",
                     "GOOGLE_PROTOBUF_CMAKE_BUILD",
+                    "PROTOBUF_INLINE_NOT_IN_HEADERS",
+                    "__NVCC__",
                 });
         }
         else if(Target.Platform == UnrealTargetPlatform.Linux)
