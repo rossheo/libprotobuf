@@ -11,7 +11,7 @@ comment = '// Added for UE4 in {0}(UTC +09:00)'.format(datetime.utcnow() + timed
 include_allow_header = '#include "AllowWindowsPlatformTypes.h"'
 include_hide_header = '#include "HideWindowsPlatformTypes.h"'
 disable_warning = '#pragma warning(disable:4800)'
-enable_warning = '#pragma warning(default:4800)'
+default_warning = '#pragma warning(default:4800)'
 
 def Check(_CodeFile):
     if (os.path.isfile(_CodeFile) is False):
@@ -60,7 +60,7 @@ def Generate(_CodeFile):
             meet_first_include = True
         code_file.write(line)
         if (meet_last_include is False and line[:len(line) - 1] == "// @@protoc_insertion_point(includes)"):
-            code_file.write('\n{0}\n{1} {2}\n{3}\n{4}\n\n'.format(msvc_check_begin, include_hide_header, comment, enable_warning, msvc_check_end))
+            code_file.write('\n{0}\n{1} {2}\n{3}\n{4}\n\n'.format(msvc_check_begin, default_warning, include_hide_header, comment, msvc_check_end))
             meet_last_include = True
     code_file.close()
     if (meet_first_include is False):
