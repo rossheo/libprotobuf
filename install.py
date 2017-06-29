@@ -7,7 +7,7 @@ if(os.name == "nt"):
 else:
     os_build_script = "build_linux.py"
 
-#subprocess.call(os_build_script, shell=True, cwd="build")
+subprocess.call(os_build_script, shell=True, cwd="build")
 if not os.path.exists(os.path.join("..", "ThirdParty")):
     os.mkdir(os.path.join("..", "ThirdParty"))
 if os.path.exists(os.path.join("..", "ThirdParty", "libprotobuf")):
