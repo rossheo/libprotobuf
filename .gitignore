@@ -1,5 +1,7 @@
-.vscode/
-build/_vs_tmp/
+.vscode
+build/_vs_tmp
+build/*.dir
+build/x64
 libprotobuf/*
 libprotobuf/bin/protoc.exe
 libprotobuf/lib/win64/libprotobuf.lib
