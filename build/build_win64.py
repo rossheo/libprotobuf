@@ -61,7 +61,6 @@ def apply_patch_for_type_traits_h():
     meet_check = False;
     for line in file_lines:
         if (meet_check is False and line[0:14] == "  #undef check"):
-            print("hi")
             type_traits_file.write('''
   //BEGIN: by Artenuvielle for UE4(There is a makro named check in Unreal project)
   #define check_UNREAL_FIX check
