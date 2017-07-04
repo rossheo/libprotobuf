@@ -45,6 +45,41 @@ def get_vs2017_devenv():
     except:
         return None
 
+def apply_patch_for_type_traits_h():
+    type_traits_h_filepath = os.path.join(prefix_path, "include/google/protobuf/stubs/type_traits.h")
+    type_traits_file = open(type_traits_h_filepath, 'r')
+    if (type_traits_file is None):
+        print("Failed to open the type_traits.h file!!!")
+        return
+    file_lines = type_traits_file.readlines()
+    type_traits_file.close()
+
+    type_traits_file = open(type_traits_h_filepath, 'w')
+    if (type_traits_file is None):
+        print("Failed to write the type_traits.h file!!!")
+        return
+    meet_check = False;
+    for line in file_lines:
+        if (meet_check is False and line[0:14] == "  #undef check"):
+            print("hi")
+            type_traits_file.write('''
+  //BEGIN: by Artenuvielle for UE4(There is a makro named check in Unreal project)
+  #define check_UNREAL_FIX check
+  #undef check
+  //END: by Artenuvielle
+'''
+            )
+            meet_check = True
+        else:
+            type_traits_file.write(line)
+    type_traits_file.write('''
+//BEGIN: by Artenuvielle for UE4(redefine makro check for UE)
+#define check check_UNREAL_FIX
+//END: by Artenuvielle
+''')
+    type_traits_file.close()
+
+
 def apply_patch_for_port_h():
     port_h_filepath = os.path.join(prefix_path, "include/google/protobuf/stubs/port.h")
     port_file = open(port_h_filepath, 'r')
@@ -118,5 +153,6 @@ subprocess.call([devenv_path, "protobuf.sln", "/Build", "Release|x64", "/Project
 
 #copy library files
 apply_patch_for_port_h()
+apply_patch_for_type_traits_h()
 copy_library()
 
