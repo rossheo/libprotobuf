@@ -58,24 +58,38 @@ def apply_patch_for_type_traits_h():
     if (type_traits_file is None):
         print("Failed to write the type_traits.h file!!!")
         return
-    meet_check = False;
+    meet_undef = False;
+    meet_yes = False;
+    meet_no = False;
+    meet_enum_value = False;
     for line in file_lines:
-        if (meet_check is False and line[0:14] == "  #undef check"):
-            type_traits_file.write('''
-  //BEGIN: by Artenuvielle for UE4(There is a makro named check in Unreal project)
-  #define check_UNREAL_FIX check
-  #undef check
-  //END: by Artenuvielle
+        if (meet_undef is False and line[0:14] == "  #undef check"):
+            type_traits_file.write('''//BEGIN: by Artenuvielle for UE4(There is a makro named check in Unreal project)
+  //#undef check
 '''
             )
-            meet_check = True
+            meet_undef = True
         else:
-            type_traits_file.write(line)
-    type_traits_file.write('''
-//BEGIN: by Artenuvielle for UE4(redefine makro check for UE)
-#define check check_UNREAL_FIX
+            if (meet_yes is False and line[0:29] == "  static yes check(const B*);"):
+                type_traits_file.write('''  static yes checkSafeForUE(const B*);
+'''
+                )
+                meet_yes = True
+            else:
+                if (meet_no is False and line[0:31] == "  static no check(const void*);"):
+                    type_traits_file.write('''  static no checkSafeForUE(const void*);
+'''
+                    )
+                    meet_no = True
+                else:
+                    if (meet_enum_value is False and line[0:70] == "    value = sizeof(check(static_cast<const D*>(NULL))) == sizeof(yes),"):
+                        type_traits_file.write('''    value = sizeof(checkSafeForUE(static_cast<const D*>(NULL))) == sizeof(yes),
 //END: by Artenuvielle
-''')
+'''
+                        )
+                        meet_enum_value = True
+                    else:
+                        type_traits_file.write(line)
     type_traits_file.close()
 
 
