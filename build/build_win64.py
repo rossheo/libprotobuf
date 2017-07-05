@@ -9,8 +9,8 @@ protobuf_src_path   = "../../protobuf-source"
 libprotobuf_path    = "../../libprotobuf"
 prefix_path         = "_prefix"
 
-def create_vs_prj():
-    cmd_line = ["cmake", "-G", "Visual Studio 14 2015 Win64"]
+def create_vs_prj_with_compiler(compiler_version):
+    cmd_line = ["cmake", "-G", compiler_version]
     #install prefix
     cmd_line.append("-DCMAKE_INSTALL_PREFIX="+os.path.join(os.getcwd(), prefix_path))
     cmd_line.append("-DCMAKE_CONFIGURATION_TYPES=Release")
@@ -31,6 +31,67 @@ def get_vs2015_devenv():
         return os.path.join(reg_value, "devenv.com")
     except:
         return None
+
+def get_vs2017_devenv():
+    try:
+        #get visual studio install path
+        reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\VisualStudio\\SxS\\VS7")
+        reg_value, reg_type = winreg.QueryValueEx(reg_key, "15.0")
+        winreg.CloseKey(reg_key);
+        if(reg_type != winreg.REG_SZ):
+            print(reg_type)
+            return None
+        return os.path.join(reg_value, "Common7", "IDE", "devenv.com")
+    except:
+        return None
+
+def apply_patch_for_type_traits_h():
+    type_traits_h_filepath = os.path.join(prefix_path, "include/google/protobuf/stubs/type_traits.h")
+    type_traits_file = open(type_traits_h_filepath, 'r')
+    if (type_traits_file is None):
+        print("Failed to open the type_traits.h file!!!")
+        return
+    file_lines = type_traits_file.readlines()
+    type_traits_file.close()
+
+    type_traits_file = open(type_traits_h_filepath, 'w')
+    if (type_traits_file is None):
+        print("Failed to write the type_traits.h file!!!")
+        return
+    meet_undef = False;
+    meet_yes = False;
+    meet_no = False;
+    meet_enum_value = False;
+    for line in file_lines:
+        if (meet_undef is False and line[0:14] == "  #undef check"):
+            type_traits_file.write('''//BEGIN: by Artenuvielle for UE4(There is a makro named check in Unreal project)
+  //#undef check
+'''
+            )
+            meet_undef = True
+        else:
+            if (meet_yes is False and line[0:29] == "  static yes check(const B*);"):
+                type_traits_file.write('''  static yes checkSafeForUE(const B*);
+'''
+                )
+                meet_yes = True
+            else:
+                if (meet_no is False and line[0:31] == "  static no check(const void*);"):
+                    type_traits_file.write('''  static no checkSafeForUE(const void*);
+'''
+                    )
+                    meet_no = True
+                else:
+                    if (meet_enum_value is False and line[0:70] == "    value = sizeof(check(static_cast<const D*>(NULL))) == sizeof(yes),"):
+                        type_traits_file.write('''    value = sizeof(checkSafeForUE(static_cast<const D*>(NULL))) == sizeof(yes),
+//END: by Artenuvielle
+'''
+                        )
+                        meet_enum_value = True
+                    else:
+                        type_traits_file.write(line)
+    type_traits_file.close()
+
 
 def apply_patch_for_port_h():
     port_h_filepath = os.path.join(prefix_path, "include/google/protobuf/stubs/port.h")
@@ -86,16 +147,25 @@ if os.path.exists(vs_intermediate):
 os.mkdir(vs_intermediate)
 os.chdir(vs_intermediate)
 
+#get vs version devenv
+vs_compiler_version = "Visual Studio 14 2015 Win64"
+devenv_path = get_vs2015_devenv()
+if(devenv_path == None):
+    vs_compiler_version = "Visual Studio 15 2017 Win64"
+    devenv_path = get_vs2017_devenv()
+    if(devenv_path == None):
+        print("Could neither find VS2015 nor VS2017")
+        quit()
 
 #create vs project files
-create_vs_prj()
+create_vs_prj_with_compiler(vs_compiler_version)
 
 #build vs project 
-devenv_path = get_vs2015_devenv()
 subprocess.call([devenv_path, "protobuf.sln", "/Build", "Release|x64", "/Project", "INSTALL"])
 
 
 #copy library files
 apply_patch_for_port_h()
+apply_patch_for_type_traits_h()
 copy_library()
 
